@@ -96,6 +96,7 @@ func scanFile(filePath string, regexps []*regexp.Regexp) []*Line {
   var lines []*Line
 
   file,_ := os.Open(filePath)
+  defer file.Close()
   scanner := bufio.NewScanner(file)
 
   lineIdx := 1

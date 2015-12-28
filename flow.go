@@ -1,7 +1,6 @@
 package logwise
 
 import (
-  "fmt"
 )
 
 type Flow struct {
@@ -25,25 +24,31 @@ func (flow *Flow) Start() {
     case *SurroundStringTransformation:
       prevResult = callTransformation(step, prevStep, prevResult)
       continue
+    case *FileWriter:
+      callWriter(step, prevStep, prevResult)
     }
 
     prevStep = step
   }
-
-  report(prevResult)
 }
 
-func report(result interface{}) {
-  switch result := result.(type){
+func callWriter(writer *FileWriter, prevStep interface{}, prevResult interface{}) interface{} {
+  var lines []string
+
+  switch result := prevResult.(type){
   case []*Extraction:
     for _,e := range result {
-      fmt.Printf("%v\n", e)
+      lines = append(lines, e.String())
     }
   case []*Line:
     for _,l := range result {
-      fmt.Printf("%v\n", l)
+      lines = append(lines, l.String())
     }
   }
+
+  writer.Write(lines)
+
+  return prevResult
 }
 
 func callTransformation(trans *SurroundStringTransformation, prevStep interface{}, prevResult interface{}) interface{} {
