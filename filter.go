@@ -7,12 +7,6 @@ import (
   "regexp"
 )
 
-type Filter interface {
-  Filter(files []string, pattern []string) []*Line
-  Files() []string
-  Patterns() []string
-}
-
 type Line struct {
   LineNbr int
   Content string

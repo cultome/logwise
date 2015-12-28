@@ -7,12 +7,6 @@ import (
   "sort"
 )
 
-type Extractor interface {
-  Extract(lines []*Line, patterns map[string]string) []*Extraction
-  Lines() []*Line
-  Patterns() map[string]string
-}
-
 type PatternExtractor struct {
   lines []*Line
   patterns map[string]string

@@ -1,7 +1,7 @@
 package logwise
 
 import "testing"
-import "fmt"
+//import "fmt"
 
 func TestExtractOnePattern(t *testing.T){
   extractor := NewPatternExtractor()
@@ -55,6 +55,4 @@ func TestExtractSinglePatternMultipleGroups(t *testing.T){
   if !ok1 || !ok2 || !ok3 {
     t.Errorf("Wrong extractions. Expecting matches on \"path\" [%v], \"role\" [%v] and \"user\" [%v]\n", ok1, ok2, ok3)
   }
-
-  fmt.Printf(" => %v\n", extraction)
 }

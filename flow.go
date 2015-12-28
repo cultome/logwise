@@ -18,9 +18,9 @@ func (flow *Flow) Start() {
 
   for _,step := range flow.Steps {
     switch step := step.(type) {
-    case Extractor:
+    case *PatternExtractor:
       prevResult = callExtractor(step, prevStep, prevResult)
-    case Filter:
+    case *LineFilter:
       prevResult = callFilter(step, prevStep, prevResult)
     }
 
@@ -43,13 +43,13 @@ func report(result interface{}) {
   }
 }
 
-func callFilter(filter Filter, prevStep interface{}, prevResult interface{}) []*Line {
+func callFilter(filter *LineFilter, prevStep interface{}, prevResult interface{}) []*Line {
   var lines []*Line
 
   if prevStep == nil {
     // nada
     lines = filter.Filter(nil, nil)
-  } else if _, ok := prevStep.(Extractor); ok {
+  } else if _, ok := prevStep.(*PatternExtractor); ok {
     // patrones
     extractions := prevResult.([]*Extraction)
     var valuesForPattern []string
@@ -62,7 +62,7 @@ func callFilter(filter Filter, prevStep interface{}, prevResult interface{}) []*
 
     lines = filter.Filter(nil, valuesForPattern)
 
-  } else if prevFilter, ok := prevStep.(Filter); ok {
+  } else if prevFilter, ok := prevStep.(*LineFilter); ok {
     // archivos y patrones
     ls := filter.Filter(prevFilter.Files(), prevFilter.Patterns())
     prevLines := prevResult.([]*Line)
@@ -72,16 +72,16 @@ func callFilter(filter Filter, prevStep interface{}, prevResult interface{}) []*
   return lines
 }
 
-func callExtractor(extractor Extractor, prevStep interface{}, prevResult interface{}) []*Extraction {
+func callExtractor(extractor *PatternExtractor, prevStep interface{}, prevResult interface{}) []*Extraction {
   var extraction []*Extraction
   
   if prevStep == nil {
     extraction = extractor.Extract(nil, nil)
-  } else if _, ok := prevStep.(Filter); ok {
+  } else if _, ok := prevStep.(*LineFilter); ok {
     // lineas
     ls := prevResult.([]*Line)
     extraction = extractor.Extract(ls, nil)
-  } else if prevExtractor, ok := prevStep.(Extractor); ok {
+  } else if prevExtractor, ok := prevStep.(*PatternExtractor); ok {
     // lineas y patrones
     prevExtraction := prevResult.([]*Extraction)
     extra := extractor.Extract(prevExtractor.Lines(), prevExtractor.Patterns())
