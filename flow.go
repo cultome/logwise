@@ -22,6 +22,9 @@ func (flow *Flow) Start() {
       prevResult = callExtractor(step, prevStep, prevResult)
     case *LineFilter:
       prevResult = callFilter(step, prevStep, prevResult)
+    case *SurroundStringTransformation:
+      prevResult = callTransformation(step, prevStep, prevResult)
+      continue
     }
 
     prevStep = step
@@ -43,6 +46,29 @@ func report(result interface{}) {
   }
 }
 
+func callTransformation(trans *SurroundStringTransformation, prevStep interface{}, prevResult interface{}) interface{} {
+  if prevStep == nil {
+    panic("Unavailable information to transform!")
+  } else if _, ok := prevStep.(*LineFilter); ok {
+    // lineas
+    ls := prevResult.([]*Line)
+    for _,line := range ls {
+      line.Content = trans.Transform(line.Content)
+    }
+
+  } else if _, ok := prevStep.(*PatternExtractor); ok {
+    // lineas y patrones
+    prevExtraction := prevResult.([]*Extraction)
+    for _,extraction := range prevExtraction {
+      for k,v := range *extraction.Matches {
+        (*extraction.Matches)[k] = trans.Transform(v)
+      }
+    }
+  }
+
+  return prevResult
+}
+
 func callFilter(filter *LineFilter, prevStep interface{}, prevResult interface{}) []*Line {
   var lines []*Line
 
@@ -56,7 +82,7 @@ func callFilter(filter *LineFilter, prevStep interface{}, prevResult interface{}
 
     for _,extraction := range extractions {
       for _,value := range (*extraction.Matches) {
-        valuesForPattern = append(valuesForPattern, fmt.Sprintf("\\b%v\\b", value))
+        valuesForPattern = append(valuesForPattern, value)
       }
     }
 
