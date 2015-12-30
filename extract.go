@@ -78,11 +78,7 @@ func (extractor *PatternExtractor) Extract(lines []*Line, patterns map[string]st
 
   for _,line := range l {
     extract,err := extract(line, regexps)
-    if err != nil {
-      fmt.Printf("Error extracting information: %v\n", err)
-    }
-
-    if extract != nil {
+    if err == nil {
       extractions = append(extractions, extract)
     }
   }

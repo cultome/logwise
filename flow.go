@@ -23,8 +23,12 @@ func (flow *Flow) Start() {
     case *LineFilter:
       prevResult = callFilter(step, prevStep, prevResult)
       prevStep = step
+
+    case *CustomTransformation:
+      prevResult = callTransformation(step, prevStep, prevResult)
     case *SurroundStringTransformation:
       prevResult = callTransformation(step, prevStep, prevResult)
+
     case *FileWriter:
       callWriter(step, prevStep, prevResult)
     case *LineContext:
@@ -63,7 +67,7 @@ func callWriter(writer *FileWriter, prevStep interface{}, prevResult interface{}
   return prevResult
 }
 
-func callTransformation(trans *SurroundStringTransformation, prevStep interface{}, prevResult interface{}) interface{} {
+func callTransformation(trans Transformation, prevStep interface{}, prevResult interface{}) interface{} {
   if prevStep == nil {
     panic("Unavailable information to transform!")
   } else if _, ok := prevStep.(*LineFilter); ok {

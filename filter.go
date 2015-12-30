@@ -32,7 +32,7 @@ func (filter *LineFilter) SetPatterns(patterns []string) *LineFilter {
   return filter
 }
 
-func (filter *LineFilter) SetFiles(files []string) *LineFilter {
+func (filter *LineFilter) SetFiles(files ...string) *LineFilter {
   filter.files = files
   return filter
 }
