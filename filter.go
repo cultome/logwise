@@ -8,7 +8,12 @@ import (
 )
 
 type Filter interface {
-  Filter(files []string, patterns []string) []*Line
+  Filter(reader *LineReader, patterns []string) []*Line
+}
+
+type LineReader interface {
+  Read() *Line
+  Source() string
 }
 
 type Line struct {
@@ -19,7 +24,7 @@ type Line struct {
 }
 
 type LineFilter struct {
-  Files []string
+  Reader *LineReader
   Patterns []string
 }
 
@@ -27,7 +32,7 @@ func (line *Line) String() string {
   return fmt.Sprintf("[%6d] %v", line.LineNbr, line.Content)
 }
 
-func NewLineFilter(files []string, patterns []string) Filter {
+func NewLineFilter(reader *LineReader, patterns []string) Filter {
   return &LineFilter{files, patterns}
 }
 
@@ -49,8 +54,8 @@ func (filter *LineFilter) Set(files []string, patterns []string) *LineFilter {
 }
 */
 
-func (filter *LineFilter) Filter(files []string, patterns []string) []*Line {
-  f, p := filterOperativeParams(filter, files, patterns)
+func (filter *LineFilter) Filter(reader *LineReader, patterns []string) []*Line {
+  f, p := filterOperativeParams(filter, reader, patterns)
 
   var linesMatched []*Line
   regexps := make([]*regexp.Regexp, len(p))
@@ -60,13 +65,13 @@ func (filter *LineFilter) Filter(files []string, patterns []string) []*Line {
     regexps[idx] = reg
   }
 
-  for _,file := range f {
-    lines := scanFile(file, regexps)
+  //for _,file := range f {
+    lines := scanFile(reader, regexps)
     if len(lines) > 0{
       newLines := filterExisting(linesMatched, lines)
       linesMatched = append(linesMatched, newLines...)
     }
-  }
+  //}
   return linesMatched
 }
 
@@ -91,18 +96,18 @@ func filterExisting(existing, news []*Line) []*Line {
   return newLines
 }
 
-func filterOperativeParams(filter *LineFilter, files []string, patterns []string) ([]string, []string) {
-  if (files == nil && filter.Files == nil) || (patterns == nil && filter.Patterns == nil) {
-    panic("Files and Patterns are required for Filter to work!")
+func filterOperativeParams(filter *LineFilter, reader *LineReader, patterns []string) (*LineReader, []string) {
+  if (reader == nil && filter.Reader == nil) || (patterns == nil && filter.Patterns == nil) {
+    panic("Reader and Patterns are required for Filter to work!")
   }
 
   var f []string
   var p []string
 
-  if filter.Files == nil {
-    f = files
+  if filter.Reader == nil {
+    f = reader
   } else {
-    f = filter.Files
+    f = filter.Reader
   }
 
   if filter.Patterns == nil {
@@ -114,22 +119,22 @@ func filterOperativeParams(filter *LineFilter, files []string, patterns []string
   return f,p
 }
 
-func scanFile(filePath string, regexps []*regexp.Regexp) []*Line {
+func scanFile(reader *LineReader, regexps []*regexp.Regexp) []*Line {
   var lines []*Line
 
-  file,_ := os.Open(filePath)
-  defer file.Close()
-  scanner := bufio.NewScanner(file)
+  //file,_ := os.Open(filePath)
+  //defer file.Close()
+  //scanner := bufio.NewScanner(file)
 
   lineIdx := 1
-  for scanner.Scan() {
-    regex := match(scanner.Text(), regexps)
+  //for scanner.Scan() {
+    regex := match(reader.Read(), regexps)
     if regex != "" {
-      line := Line{lineIdx, scanner.Text(), filePath, regex}
+      line := Line{lineIdx, scanner.Text(), reader.Source(), regex}
       lines = append(lines, &line)
     }
     lineIdx++
-  }
+  //}
 
   return lines
 }
