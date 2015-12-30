@@ -11,6 +11,7 @@ type Line struct {
   LineNbr int
   Content string
   FileName string
+  Regexp string
 }
 
 type LineFilter struct {
@@ -116,8 +117,9 @@ func scanFile(filePath string, regexps []*regexp.Regexp) []*Line {
 
   lineIdx := 1
   for scanner.Scan() {
-    if match(scanner.Text(), regexps) {
-      line := Line{lineIdx, scanner.Text(), filePath}
+    regex := match(scanner.Text(), regexps)
+    if regex != "" {
+      line := Line{lineIdx, scanner.Text(), filePath, regex}
       lines = append(lines, &line)
     }
     lineIdx++
@@ -126,11 +128,11 @@ func scanFile(filePath string, regexps []*regexp.Regexp) []*Line {
   return lines
 }
 
-func match(line string, regexps []*regexp.Regexp) bool {
+func match(line string, regexps []*regexp.Regexp) string {
   for _, reg :=  range regexps {
     if reg.Match([]byte(line)) {
-      return true
+      return reg.String()
     }
   }
-  return false
+  return ""
 }

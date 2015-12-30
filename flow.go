@@ -22,18 +22,29 @@ func (flow *Flow) Start() {
     switch step := step.(type) {
     case *PatternExtractor:
       prevResult = callExtractor(step, prevStep, prevResult)
+      prevStep = step
     case *LineFilter:
       prevResult = callFilter(step, prevStep, prevResult)
+      prevStep = step
     case *SurroundStringTransformation:
       prevResult = callTransformation(step, prevStep, prevResult)
-      continue
     case *FileWriter:
       callWriter(step, prevStep, prevResult)
-      continue
+    case *LineContext:
+      prevResult = callContext(step, prevStep, prevResult)
     }
-
-    prevStep = step
   }
+}
+
+func callContext(ctx *LineContext, prevStep interface{}, prevResult interface{}) interface{} {
+  switch result := prevResult.(type){
+  case []*Extraction:
+    panic("Unavailable information to get context from!")
+  case []*Line:
+      return ctx.Get(result...)
+  }
+
+  return prevResult
 }
 
 func callWriter(writer *FileWriter, prevStep interface{}, prevResult interface{}) interface{} {

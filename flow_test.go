@@ -42,19 +42,19 @@ func TestFilterExtractorTransformationFilterWriterFlow(t *testing.T){
 
 func TestRealCase(t *testing.T){
   flow := NewFlow(
-    NewLineFilter().Set([]string{"logs/orderReqRes.log"}, []string{"<awbNbr>794670441143</awbNbr>"}),
-    NewLineFilter().Set([]string{"logs/invReqRes.log"}, []string{"itemnumber=\"794670441143\""}),
+    NewLineFilter().Set([]string{"logs/orderReqRes.log"}, []string{"<awbNbr>794666000437</awbNbr>"}),
+    NewLineFilter().Set([]string{"logs/invReqRes.log"}, []string{"itemnumber=\"794666000437\""}),
     NewFileWriter("tmp.log", false),
-    NewPatternExtractor().SetPatterns(map[string]string {"txId": "invoices - \\[([\\d]+) ->]", "serie": "serie=\"([\\w]+)\""}),
-    NewSurroundStringTransformation( "txId", "\\[", " <-]"),
+    NewPatternExtractor().SetPatterns(map[string]string {"txId": "invoices - \\[([\\d]+) ->]"}),
+    NewSurroundStringTransformation("txId", "\\[", " <-]"),
     NewFileWriter("tmp.log", true),
     NewLineFilter().SetFiles([]string{"logs/invReqRes.log"}),
     NewFileWriter("tmp.log", true),
     NewPatternExtractor().SetPatterns(map[string]string {"folio": "<folio>([\\d]+)</folio>"}),
+    NewSurroundStringTransformation( "folio", "", "</InvoiceNumber>"),
+    NewLineFilter().SetFiles([]string{"logs/automaticTasks.log"}),
+    NewLineContext("tasks - \\[\\*] Message", "INFO   "),
     NewFileWriter("tmp.log", true),
-    //NewConcatenateTransformation("<InvoiceNumber>", "${serie}", "${folio}", "</InvoiceNumber>"),
-    //NewLineFilter().SetFiles([]string{"logs/automaticTask.log"}),
-    //NewFileWriter("tmp.log", true),
   )
   flow.Start()
 }
