@@ -35,13 +35,13 @@ func rangeExists(existingRanges *[]lineRange, lineRange *lineRange) bool {
   if existingRanges != nil {
     for _,r := range *existingRanges {
       if r.begin == lineRange.begin && r.end == lineRange.end && r.fileName == lineRange.fileName {
-        return false
+        return true
       }
     }
   }
 
   *existingRanges = append(*existingRanges, *lineRange)
-  return true
+  return false
 }
 
 func getLines(ctx *LineContext, line *Line) ([]*Line, *Line, *Line) {

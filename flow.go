@@ -1,7 +1,6 @@
 package logwise
 
 import (
-  "fmt"
 )
 
 type Flow struct {
@@ -17,8 +16,6 @@ func (flow *Flow) Start() {
   var prevResult interface{}
 
   for _,step := range flow.Steps {
-    fmt.Printf("[*] Executing %T\n", step)
-
     switch step := step.(type) {
     case *PatternExtractor:
       prevResult = callExtractor(step, prevStep, prevResult)

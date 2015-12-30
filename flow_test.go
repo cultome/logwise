@@ -44,17 +44,18 @@ func TestRealCase(t *testing.T){
   flow := NewFlow(
     NewLineFilter().Set([]string{"logs/orderReqRes.log"}, []string{"<awbNbr>794666000437</awbNbr>"}),
     NewLineFilter().Set([]string{"logs/invReqRes.log"}, []string{"itemnumber=\"794666000437\""}),
-    NewFileWriter("tmp.log", false),
+    NewFileWriter("logs/real_case.log", false).AddPrefix("===================== Invoice order and Invoice Request ====================="),
+
     NewPatternExtractor().SetPatterns(map[string]string {"txId": "invoices - \\[([\\d]+) ->]"}),
     NewSurroundStringTransformation("txId", "\\[", " <-]"),
-    NewFileWriter("tmp.log", true),
     NewLineFilter().SetFiles([]string{"logs/invReqRes.log"}),
-    NewFileWriter("tmp.log", true),
+    NewFileWriter("logs/real_case.log", true).AddPrefix("\n\n===================== Invoice Response ====================="),
+
     NewPatternExtractor().SetPatterns(map[string]string {"folio": "<folio>([\\d]+)</folio>"}),
     NewSurroundStringTransformation( "folio", "", "</InvoiceNumber>"),
     NewLineFilter().SetFiles([]string{"logs/automaticTasks.log"}),
     NewLineContext("tasks - \\[\\*] Message", "INFO   "),
-    NewFileWriter("tmp.log", true),
+    NewFileWriter("logs/real_case.log", true).AddPrefix("\n\n===================== LCCS Transaction ====================="),
   )
   flow.Start()
 }
