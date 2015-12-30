@@ -37,7 +37,7 @@ func (flow *Flow) Start() {
   }
 }
 
-func callContext(ctx *LineContext, prevStep interface{}, prevResult interface{}) interface{} {
+func callContext(ctx Contexter, prevStep interface{}, prevResult interface{}) interface{} {
   switch result := prevResult.(type){
   case []*Extraction:
     panic("Unavailable information to get context from!")
@@ -48,7 +48,7 @@ func callContext(ctx *LineContext, prevStep interface{}, prevResult interface{})
   return prevResult
 }
 
-func callWriter(writer *FileWriter, prevStep interface{}, prevResult interface{}) interface{} {
+func callWriter(writer Writer, prevStep interface{}, prevResult interface{}) interface{} {
   var lines []string
 
   switch result := prevResult.(type){
@@ -90,7 +90,7 @@ func callTransformation(trans Transformation, prevStep interface{}, prevResult i
   return prevResult
 }
 
-func callFilter(filter *LineFilter, prevStep interface{}, prevResult interface{}) []*Line {
+func callFilter(filter Filter, prevStep interface{}, prevResult interface{}) []*Line {
   var lines []*Line
 
   if prevStep == nil {
@@ -118,7 +118,7 @@ func callFilter(filter *LineFilter, prevStep interface{}, prevResult interface{}
   return lines
 }
 
-func callExtractor(extractor *PatternExtractor, prevStep interface{}, prevResult interface{}) []*Extraction {
+func callExtractor(extractor Extractor, prevStep interface{}, prevResult interface{}) []*Extraction {
   var extraction []*Extraction
   
   if prevStep == nil {
