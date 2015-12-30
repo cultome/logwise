@@ -5,6 +5,10 @@ import(
   "bufio"
 )
 
+type Contexter interface {
+  Get(lines ...*Line) []*Line
+}
+
 type LineContext struct {
   BeforeMatch, AfterMatch string
 }
@@ -14,7 +18,7 @@ type lineRange struct {
   fileName string
 }
 
-func NewLineContext(beforeMatch, afterMatch string) *LineContext {
+func NewLineContext(beforeMatch, afterMatch string) Contexter {
   return &LineContext{beforeMatch, afterMatch}
 }
 
@@ -45,8 +49,8 @@ func rangeExists(existingRanges *[]lineRange, lineRange *lineRange) bool {
 }
 
 func getLines(ctx *LineContext, line *Line) ([]*Line, *Line, *Line) {
-  filter := NewLineFilter()
-  filter.Set([]string{line.FileName}, []string{ctx.BeforeMatch, ctx.AfterMatch})
+  filter := NewLineFilter([]string{line.FileName}, []string{ctx.BeforeMatch, ctx.AfterMatch})
+  //filter.Set([]string{line.FileName}, []string{ctx.BeforeMatch, ctx.AfterMatch})
   lines := filter.Filter(nil, nil)
 
   beginLine := findBegin(lines, line, ctx.BeforeMatch)

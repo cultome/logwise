@@ -7,9 +7,13 @@ import (
   "sort"
 )
 
+type Extractor interface {
+  Extract(lines []*Line, patterns map[string]string) []*Extraction
+}
+
 type PatternExtractor struct {
-  lines []*Line
-  patterns map[string]string
+  Lines []*Line
+  Patterns map[string]string
 }
 
 type Extraction struct {
@@ -37,33 +41,35 @@ func (extractor *Extraction) String() string {
   return str
 }
 
-func NewPatternExtractor() *PatternExtractor {
-  return &PatternExtractor{}
+func NewPatternExtractor(lines []*Line, patterns map[string]string) Extractor {
+  return &PatternExtractor{lines, patterns}
 }
 
+/*
 func (extractor *PatternExtractor) SetLines(lines []*Line) *PatternExtractor {
-  extractor.lines = lines
+  extractor.Lines = lines
   return extractor
 }
 
 func (extractor *PatternExtractor) SetPatterns(patterns map[string]string) *PatternExtractor {
-  extractor.patterns = patterns
+  extractor.Patterns = patterns
   return extractor
 }
 
 func (extractor *PatternExtractor) Set(lines []*Line, patterns map[string]string) *PatternExtractor {
-  extractor.lines = lines
-  extractor.patterns = patterns
+  extractor.Lines = lines
+  extractor.Patterns = patterns
   return extractor
 }
 
 func (extractor *PatternExtractor) Lines() []*Line {
-  return extractor.lines
+  return extractor.Lines
 }
 
 func (extractor *PatternExtractor) Patterns() map[string]string {
-  return extractor.patterns
+  return extractor.Patterns
 }
+*/
 
 func (extractor *PatternExtractor) Extract(lines []*Line, patterns map[string]string) []*Extraction {
   l,p := extractorOperativeParams(extractor, lines, patterns)
@@ -86,23 +92,23 @@ func (extractor *PatternExtractor) Extract(lines []*Line, patterns map[string]st
 }
 
 func extractorOperativeParams(extractor *PatternExtractor, lines []*Line, patterns map[string]string) ([]*Line, map[string]string) {
-  if (lines == nil && extractor.lines == nil) || (patterns == nil && extractor.patterns == nil) {
+  if (lines == nil && extractor.Lines == nil) || (patterns == nil && extractor.Patterns == nil) {
     panic("Lines and Patterns are required for Extractor to work!")
   }
 
   var l []*Line
   var p map[string]string
 
-  if extractor.lines == nil {
+  if extractor.Lines == nil {
     l = lines
   } else {
-    l = extractor.lines
+    l = extractor.Lines
   }
 
-  if extractor.patterns == nil {
+  if extractor.Patterns == nil {
     p = patterns
   } else {
-    p = extractor.patterns
+    p = extractor.Patterns
   }
 
   return l,p

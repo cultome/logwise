@@ -7,6 +7,10 @@ import (
   "regexp"
 )
 
+type Filter interface {
+  Filter(files []string, patterns []string) []*Line
+}
+
 type Line struct {
   LineNbr int
   Content string
@@ -15,33 +19,35 @@ type Line struct {
 }
 
 type LineFilter struct {
-  files []string
-  patterns []string
+  Files []string
+  Patterns []string
 }
 
 func (line *Line) String() string {
   return fmt.Sprintf("[%6d] %v", line.LineNbr, line.Content)
 }
 
-func NewLineFilter() *LineFilter {
-  return &LineFilter{}
+func NewLineFilter(files []string, patterns []string) Filter {
+  return &LineFilter{files, patterns}
 }
 
+/*
 func (filter *LineFilter) SetPatterns(patterns []string) *LineFilter {
-  filter.patterns = patterns
+  filter.Patterns = patterns
   return filter
 }
 
 func (filter *LineFilter) SetFiles(files ...string) *LineFilter {
-  filter.files = files
+  filter.Files = files
   return filter
 }
 
 func (filter *LineFilter) Set(files []string, patterns []string) *LineFilter {
-  filter.files = files
-  filter.patterns = patterns
+  filter.Files = files
+  filter.Patterns = patterns
   return filter
 }
+*/
 
 func (filter *LineFilter) Filter(files []string, patterns []string) []*Line {
   f, p := filterOperativeParams(filter, files, patterns)
@@ -86,23 +92,23 @@ func filterExisting(existing, news []*Line) []*Line {
 }
 
 func filterOperativeParams(filter *LineFilter, files []string, patterns []string) ([]string, []string) {
-  if (files == nil && filter.files == nil) || (patterns == nil && filter.patterns == nil) {
+  if (files == nil && filter.Files == nil) || (patterns == nil && filter.Patterns == nil) {
     panic("Files and Patterns are required for Filter to work!")
   }
 
   var f []string
   var p []string
 
-  if filter.files == nil {
+  if filter.Files == nil {
     f = files
   } else {
-    f = filter.files
+    f = filter.Files
   }
 
-  if filter.patterns == nil {
+  if filter.Patterns == nil {
     p = patterns
   } else {
-    p = filter.patterns
+    p = filter.Patterns
   }
 
   return f,p

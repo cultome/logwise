@@ -5,6 +5,10 @@ import (
   "os"
 )
 
+type Writer interface {
+  Write(lines []string)
+}
+
 type FileWriter struct {
   FilePath string
   Append bool
@@ -12,7 +16,7 @@ type FileWriter struct {
   Postfix string
 }
 
-func NewFileWriter(filePath string, append bool) *FileWriter {
+func NewFileWriter(filePath string, append bool) Writer {
   return &FileWriter{filePath, append, "", ""}
 }
 
@@ -26,7 +30,7 @@ func (w *FileWriter) AddPostfix(postfix string) *FileWriter {
   return w
 }
 
-func (w *FileWriter) Write(contents []string) {
+func (w *FileWriter) Write(lines []string) {
   var flags int
 
   if w.Append {
@@ -42,7 +46,7 @@ func (w *FileWriter) Write(contents []string) {
     file.WriteString(fmt.Sprintf("%v\n", w.Prefix))
   }
 
-  for _,line := range contents {
+  for _,line := range lines {
     file.WriteString(fmt.Sprintf("%v\n", line))
   }
 

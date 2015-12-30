@@ -110,7 +110,7 @@ func callFilter(filter *LineFilter, prevStep interface{}, prevResult interface{}
 
   } else if prevFilter, ok := prevStep.(*LineFilter); ok {
     // archivos y patrones
-    ls := filter.Filter(prevFilter.files, prevFilter.patterns)
+    ls := filter.Filter(prevFilter.Files, prevFilter.Patterns)
     prevLines := prevResult.([]*Line)
     lines = append(prevLines, ls...)
   }
@@ -130,7 +130,7 @@ func callExtractor(extractor *PatternExtractor, prevStep interface{}, prevResult
   } else if prevExtractor, ok := prevStep.(*PatternExtractor); ok {
     // lineas y patrones
     prevExtraction := prevResult.([]*Extraction)
-    extra := extractor.Extract(prevExtractor.Lines(), prevExtractor.Patterns())
+    extra := extractor.Extract(prevExtractor.Lines, prevExtractor.Patterns)
     extraction = append(prevExtraction, extra...)
   }
 
