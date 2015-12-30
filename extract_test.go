@@ -5,7 +5,7 @@ import "testing"
 
 func TestExtractOnePattern(t *testing.T){
   extractor := NewPatternExtractor()
-  line := Line{50426, "INFO   2015-12-24 14:28:16,788 resourceAccess - [+] /invoiceOrder.do | 30 | 910744"}
+  line := Line{50426, "INFO   2015-12-24 14:28:16,788 resourceAccess - [+] /invoiceOrder.do | 30 | 910744", "logs/nohup.out"}
 
   extractions := extractor.Extract([]*Line{&line}, map[string]string {"path": "/([\\w]+).do"})
   if len(extractions) != 1 {
@@ -20,7 +20,7 @@ func TestExtractOnePattern(t *testing.T){
 
 func TestExtractMultiplePatterns(t *testing.T){
   extractor := NewPatternExtractor()
-  line := Line{50426, "INFO   2015-12-24 14:28:16,788 resourceAccess - [+] /invoiceOrder.do | 30 | 910744"}
+  line := Line{50426, "INFO   2015-12-24 14:28:16,788 resourceAccess - [+] /invoiceOrder.do | 30 | 910744", "logs/nohup.out"}
 
   extractions := extractor.Extract([]*Line{&line}, map[string]string {"path": "/([\\w]+).do", "role": "\\| ([\\d]+) \\|", "user": "([\\d]+)$"})
   if len(extractions) <= 0 {
@@ -39,7 +39,7 @@ func TestExtractMultiplePatterns(t *testing.T){
 
 func TestExtractSinglePatternMultipleGroups(t *testing.T){
   extractor := NewPatternExtractor()
-  line := Line{50426, "INFO   2015-12-24 14:28:16,788 resourceAccess - [+] /invoiceOrder.do | 30 | 910744"}
+  line := Line{50426, "INFO   2015-12-24 14:28:16,788 resourceAccess - [+] /invoiceOrder.do | 30 | 910744", "logs/nohup.out"}
 
   extractions := extractor.Extract([]*Line{&line}, map[string]string {"path,role,user": "/([\\w]+).do | ([\\d]+) | ([\\d]+)$"})
   if len(extractions) <= 0 {

@@ -1,6 +1,7 @@
 package logwise
 
 import (
+  "fmt"
 )
 
 type Flow struct {
@@ -16,6 +17,8 @@ func (flow *Flow) Start() {
   var prevResult interface{}
 
   for _,step := range flow.Steps {
+    fmt.Printf("[*] Executing %T\n", step)
+
     switch step := step.(type) {
     case *PatternExtractor:
       prevResult = callExtractor(step, prevStep, prevResult)
@@ -26,6 +29,7 @@ func (flow *Flow) Start() {
       continue
     case *FileWriter:
       callWriter(step, prevStep, prevResult)
+      continue
     }
 
     prevStep = step
@@ -58,7 +62,7 @@ func callTransformation(trans *SurroundStringTransformation, prevStep interface{
     // lineas
     ls := prevResult.([]*Line)
     for _,line := range ls {
-      line.Content = trans.Transform(line.Content)
+      line.Content = trans.Transform("", line.Content)
     }
 
   } else if _, ok := prevStep.(*PatternExtractor); ok {
@@ -66,7 +70,7 @@ func callTransformation(trans *SurroundStringTransformation, prevStep interface{
     prevExtraction := prevResult.([]*Extraction)
     for _,extraction := range prevExtraction {
       for k,v := range *extraction.Matches {
-        (*extraction.Matches)[k] = trans.Transform(v)
+        (*extraction.Matches)[k] = trans.Transform(k,v)
       }
     }
   }
@@ -84,7 +88,6 @@ func callFilter(filter *LineFilter, prevStep interface{}, prevResult interface{}
     // patrones
     extractions := prevResult.([]*Extraction)
     var valuesForPattern []string
-
     for _,extraction := range extractions {
       for _,value := range (*extraction.Matches) {
         valuesForPattern = append(valuesForPattern, value)
@@ -95,7 +98,7 @@ func callFilter(filter *LineFilter, prevStep interface{}, prevResult interface{}
 
   } else if prevFilter, ok := prevStep.(*LineFilter); ok {
     // archivos y patrones
-    ls := filter.Filter(prevFilter.Files(), prevFilter.Patterns())
+    ls := filter.Filter(prevFilter.files, prevFilter.patterns)
     prevLines := prevResult.([]*Line)
     lines = append(prevLines, ls...)
   }

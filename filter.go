@@ -10,6 +10,7 @@ import (
 type Line struct {
   LineNbr int
   Content string
+  FileName string
 }
 
 type LineFilter struct {
@@ -41,14 +42,6 @@ func (filter *LineFilter) Set(files []string, patterns []string) *LineFilter {
   return filter
 }
 
-func (filter *LineFilter) Files() []string {
-  return filter.files
-}
-
-func (filter *LineFilter) Patterns() []string {
-  return filter.patterns
-}
-
 func (filter *LineFilter) Filter(files []string, patterns []string) []*Line {
   f, p := filterOperativeParams(filter, files, patterns)
 
@@ -63,10 +56,32 @@ func (filter *LineFilter) Filter(files []string, patterns []string) []*Line {
   for _,file := range f {
     lines := scanFile(file, regexps)
     if len(lines) > 0{
-      linesMatched = append(linesMatched, lines...)
+      newLines := filterExisting(linesMatched, lines)
+      linesMatched = append(linesMatched, newLines...)
     }
   }
   return linesMatched
+}
+
+func filterExisting(existing, news []*Line) []*Line {
+  var newLines []*Line
+  exist := false
+
+  for _,n := range news {
+    exist = false
+    for _,e := range existing {
+      if n.LineNbr == e.LineNbr && e.FileName == n.FileName {
+        exist = true
+        break
+      }
+    }
+
+    if !exist {
+      newLines = append(newLines, n)
+    }
+  }
+
+  return newLines
 }
 
 func filterOperativeParams(filter *LineFilter, files []string, patterns []string) ([]string, []string) {
@@ -102,7 +117,7 @@ func scanFile(filePath string, regexps []*regexp.Regexp) []*Line {
   lineIdx := 1
   for scanner.Scan() {
     if match(scanner.Text(), regexps) {
-      line := Line{lineIdx, scanner.Text()}
+      line := Line{lineIdx, scanner.Text(), filePath}
       lines = append(lines, &line)
     }
     lineIdx++

@@ -2,27 +2,31 @@ package logwise
 
 import (
   "fmt"
-  "bufio"
   "os"
 )
 
 type FileWriter struct {
   FilePath string
+  Append bool
 }
 
-func NewFileWriter(filePath string) *FileWriter {
-  return &FileWriter{filePath}
+func NewFileWriter(filePath string, append bool) *FileWriter {
+  return &FileWriter{filePath, append}
 }
 
 func (w *FileWriter) Write(contents []string) {
-  file,_ := os.Create(w.FilePath)
-  defer file.Close()
-  
-  writer := bufio.NewWriter(file)
+  var flags int
 
-  for _,line := range contents {
-    writer.Write([]byte(fmt.Sprintf("%v\n", line)))
+  if w.Append {
+    flags = os.O_WRONLY | os.O_APPEND
+  } else {
+    flags = os.O_CREATE | os.O_WRONLY | os.O_TRUNC
   }
 
-  writer.Flush()
+  file,_ := os.OpenFile(w.FilePath, flags, 0666)
+  defer file.Close()
+  
+  for _,line := range contents {
+    file.WriteString(fmt.Sprintf("%v\n", line))
+  }
 }

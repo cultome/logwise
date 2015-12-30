@@ -5,13 +5,28 @@ import (
 )
 
 type SurroundStringTransformation struct {
-  Prefix, Postfix string
+  Key, Prefix, Postfix string
 }
 
-func NewSurroundStringTransformation(prefix, postfix string) *SurroundStringTransformation {
-  return &SurroundStringTransformation{prefix, postfix}
+type ConcatenateTransformation struct {
+  Values []string
 }
 
-func (trans *SurroundStringTransformation) Transform(value string) string {
-  return fmt.Sprintf("%v%v%v", trans.Prefix, value, trans.Postfix)
+func NewConcatenateTransformation(values ...string) *ConcatenateTransformation {
+  return &ConcatenateTransformation{values}
+}
+
+func NewSurroundStringTransformation(key, prefix, postfix string) *SurroundStringTransformation {
+  return &SurroundStringTransformation{key, prefix, postfix}
+}
+
+func (trans *ConcatenateTransformation) Transform(key, value string) string {
+  return value
+}
+
+func (trans *SurroundStringTransformation) Transform(key,value string) string {
+  if trans.Key == key {
+    return fmt.Sprintf("%v%v%v", trans.Prefix, value, trans.Postfix)
+  }
+  return value
 }

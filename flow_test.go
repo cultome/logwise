@@ -23,7 +23,7 @@ func TestFilterExtractorTransformationFilterFlow(t *testing.T){
   flow := NewFlow(
     NewLineFilter().Set([]string{"logs/nohup.out"}, []string{"invoices - \\[[\\d]+ ->]"}),
     NewPatternExtractor().SetPatterns(map[string]string {"txId": "invoices - \\[([\\d]+) ->]"}),
-    NewSurroundStringTransformation("\\[", " <-]"),
+    NewSurroundStringTransformation("txId", "\\[", " <-]"),
     NewLineFilter().SetFiles([]string{"logs/invReqRes.log", "logs/invReqRes.log1"}),
   )
   flow.Start()
@@ -33,9 +33,28 @@ func TestFilterExtractorTransformationFilterWriterFlow(t *testing.T){
   flow := NewFlow(
     NewLineFilter().Set([]string{"logs/nohup.out"}, []string{"invoices - \\[[\\d]+ ->]"}),
     NewPatternExtractor().SetPatterns(map[string]string {"txId": "invoices - \\[([\\d]+) ->]"}),
-    NewSurroundStringTransformation("\\[", " <-]"),
+    NewSurroundStringTransformation("txId", "\\[", " <-]"),
     NewLineFilter().SetFiles([]string{"logs/invReqRes.log", "logs/invReqRes.log1"}),
-    NewFileWriter("logs/responses.log"),
+    NewFileWriter("logs/responses.log", false),
+  )
+  flow.Start()
+}
+
+func TestRealCase(t *testing.T){
+  flow := NewFlow(
+    NewLineFilter().Set([]string{"logs/orderReqRes.log"}, []string{"<awbNbr>794670441143</awbNbr>"}),
+    NewLineFilter().Set([]string{"logs/invReqRes.log"}, []string{"itemnumber=\"794670441143\""}),
+    NewFileWriter("tmp.log", false),
+    NewPatternExtractor().SetPatterns(map[string]string {"txId": "invoices - \\[([\\d]+) ->]", "serie": "serie=\"([\\w]+)\""}),
+    NewSurroundStringTransformation( "txId", "\\[", " <-]"),
+    NewFileWriter("tmp.log", true),
+    NewLineFilter().SetFiles([]string{"logs/invReqRes.log"}),
+    NewFileWriter("tmp.log", true),
+    NewPatternExtractor().SetPatterns(map[string]string {"folio": "<folio>([\\d]+)</folio>"}),
+    NewFileWriter("tmp.log", true),
+    //NewConcatenateTransformation("<InvoiceNumber>", "${serie}", "${folio}", "</InvoiceNumber>"),
+    //NewLineFilter().SetFiles([]string{"logs/automaticTask.log"}),
+    //NewFileWriter("tmp.log", true),
   )
   flow.Start()
 }
