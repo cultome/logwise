@@ -3,7 +3,7 @@ package logwise
 import "testing"
 
 func TestFilterOneFileOnePattern(t *testing.T){
-  filter := NewLineFilter(NewFileReader("logs/nohup.out"), []string{"\\[\\+] /invoiceOrder.do"})
+  filter := NewLineFilter([]string{"\\[\\+] /invoiceOrder.do"}, "logs/nohup.out")
   lines := filter.Filter(nil, nil)
 
   if lines == nil || len(lines) <= 0 {

@@ -6,22 +6,22 @@ import (
 )
 
 type ServerSession struct {
-
+  server string
+  config *ssh.ClientConfig
 }
 
-func NewServerSession() *ServerSession {
-  return &ServerSession{}
-}
-
-func (s *ServerSession) Connect(server, username, password string) {
-  config := &ssh.ClientConfig{
+func NewServerSession(server, username, password string) *ServerSession {
+  config := &ssh.ClientConfig {
     User: username,
     Auth: []ssh.AuthMethod{
       ssh.Password(password),
     },
   }
+  return &ServerSession{server, config}
+}
 
-  conn, err := ssh.Dial("tcp", server, config)
+func (s *ServerSession) Connect() {
+  conn, err := ssh.Dial("tcp", s.server, s.config)
   if err != nil {
     panic("OH NO!! The connection failed!")
   }

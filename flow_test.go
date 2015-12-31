@@ -2,67 +2,84 @@ package logwise
 
 import (
   "testing"
-  "time"
-  "strconv"
   "fmt"
 )
 
 func TestFilterExtractorFlow(t *testing.T){
-  flow := NewFlow(
-    NewLineFilter(NewFileReader("logs/nohup.out"), []string{"\\[\\+] /invoiceOrder.do"}),
+  NewFlow(
+    NewLineFilter([]string{"\\[\\+] /invoiceOrder.do"}, "logs/nohup.out"),
     NewPatternExtractor(nil, map[string]string {"path,role,user": "/([\\w]+).do | ([\\d]+) | ([\\d]+)$"}),
-  )
-  flow.Start()
+  ).Start()
 }
 
 func TestFilterExtractorFilterFlow(t *testing.T){
-  flow := NewFlow(
-    NewLineFilter(NewFileReader("logs/nohup.out"), []string{"invoices - \\[[\\d]+ ->]"}),
+  NewFlow(
+    NewLineFilter([]string{"invoices - \\[[\\d]+ ->]"}, "logs/nohup.out"),
     NewPatternExtractor(nil, map[string]string {"txId": "invoices - \\[([\\d]+) ->]"}),
-    NewLineFilter(NewFileReader("logs/nohup.out"), nil),
-  )
-  flow.Start()
+    NewLineFilter(nil, "logs/nohup.out"),
+  ).Start()
 }
 
 func TestFilterExtractorTransformationFilterFlow(t *testing.T){
-  flow := NewFlow(
-    NewLineFilter(NewFileReader("logs/nohup.out"), []string{"invoices - \\[[\\d]+ ->]"}),
+  NewFlow(
+    NewLineFilter([]string{"invoices - \\[[\\d]+ ->]"}, "logs/nohup.out"),
     NewPatternExtractor(nil, map[string]string {"txId": "invoices - \\[([\\d]+) ->]"}),
     NewSurroundStringTransformation("txId", "\\[", " <-]"),
-    NewLineFilter(NewFileReader("logs/invReqRes.log", "logs/invReqRes.log1"), nil),
-  )
-  flow.Start()
+    NewLineFilter(nil, "logs/invReqRes.log", "logs/invReqRes.log1"),
+  ).Start()
 }
 
 func TestFilterExtractorTransformationFilterWriterFlow(t *testing.T){
-  flow := NewFlow(
-    NewLineFilter(NewFileReader("logs/nohup.out"), []string{"invoices - \\[[\\d]+ ->]"}),
+  NewFlow(
+    NewLineFilter([]string{"invoices - \\[[\\d]+ ->]"}, "logs/nohup.out"),
     NewPatternExtractor(nil, map[string]string {"txId": "invoices - \\[([\\d]+) ->]"}),
     NewSurroundStringTransformation("txId", "\\[", " <-]"),
-    NewLineFilter(NewFileReader("logs/invReqRes.log", "logs/invReqRes.log1"), nil),
+    NewLineFilter(nil, "logs/invReqRes.log", "logs/invReqRes.log1"),
     NewFileWriter("logs/responses.log", false, "", ""),
-  )
-  flow.Start()
+  ).Start()
 }
 
 func TestRealCaseTraceOrder(t *testing.T){
-  flow := NewFlow(
-    NewLineFilter(NewFileReader("logs/orderReqRes.log"), []string{"<awbNbr>794666000437</awbNbr>"}),
-    NewLineFilter(NewFileReader("logs/invReqRes.log"), []string{"itemnumber=\"794666000437\""}),
+  NewFlow(
+    NewLineFilter([]string{"<awbNbr>794666000437</awbNbr>"}, "logs/orderReqRes.log"),
+    NewLineFilter([]string{"itemnumber=\"794666000437\""}, "logs/invReqRes.log"),
     NewFileWriter("logs/real_case.log", false, "===================== Invoice order and Invoice Request =====================", " "),
 
     NewPatternExtractor(nil, map[string]string {"txId": "invoices - \\[([\\d]+) ->]"}),
     NewSurroundStringTransformation("txId", "\\[", " <-]"),
-    NewLineFilter(NewFileReader("logs/invReqRes.log"), nil),
+    NewLineFilter(nil, "logs/invReqRes.log"),
     NewFileWriter("logs/real_case.log", true, "===================== Invoice Response =====================", " "),
 
     NewPatternExtractor(nil, map[string]string {"folio": "<folio>([\\d]+)</folio>"}),
     NewCustomTransformation("folio", func(v string) string {
       return fmt.Sprintf("<InvoiceNumber>([A-Z]+%v)</InvoiceNumber>", v)
     }),
-    NewLineFilter(NewFileReader("logs/automaticTasks.log"), nil),
+    NewLineFilter(nil, "logs/automaticTasks.log"),
     NewLineContext("tasks - \\[\\*] Message", "INFO   "),
     NewFileWriter("logs/real_case.log", true, "===================== LCCS Transaction =====================", " "),
-  )
-  flow.Start()
+  ).Start()
 }
+
+/*
+func TestRealCaseCheckRemoteLogs(t *testing.T){
+  NewFlow(
+    NewServerSession("server:22", "user", "pass"),
+    NewGrepFilter([]string{"<awbNbr>794666000437</awbNbr>"}, "$INC_LOG/orderReqRes.log"),
+    NewGrepFilter([]string{"itemnumber=\"794666000437\""}, "$INC_LOG/invReqRes.log"),
+    NewFileWriter("logs/real_case.log", false, "===================== Invoice order and Invoice Request =====================", " "),
+
+    NewPatternExtractor(nil, map[string]string {"txId": "invoices - \\[([\\d]+) ->]"}),
+    NewSurroundStringTransformation("txId", "\\[", " <-]"),
+    NewGrepFilter(nil, "$INC_LOG/invReqRes.log"),
+    NewFileWriter("logs/real_case.log", true, "===================== Invoice Response =====================", " "),
+
+    NewPatternExtractor(nil, map[string]string {"folio": "<folio>([\\d]+)</folio>"}),
+    NewCustomTransformation("folio", func(v string) string {
+      return fmt.Sprintf("<InvoiceNumber>([A-Z]+%v)</InvoiceNumber>", v)
+    }),
+    NewGrepFilter(nil, "$INC_LOG/automaticTasks.log"),
+    NewLineContext("tasks - \\[\\*] Message", "INFO   "),
+    NewFileWriter("logs/real_case.log", true, "===================== LCCS Transaction =====================", " "),
+  ).Start()
+}
+*/

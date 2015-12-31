@@ -94,7 +94,8 @@ type LineFilter struct {
   Patterns []string
 }
 
-func NewLineFilter(reader LineReader, patterns []string) Filter {
+func NewLineFilter(patterns []string, files ...string) Filter {
+  reader := NewFileReader(files...)
   return &LineFilter{reader, patterns}
 }
 
