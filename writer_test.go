@@ -6,7 +6,7 @@ import (
 )
 
 func TestWriteFile(t *testing.T) {
-  writer := NewFileWriter("logs/result.log", false)
+  writer := NewFileWriter("logs/result.log", false, "", "")
   writer.Write([]string{"uno", "dos", "tres"})
 
   content, err := ioutil.ReadFile("logs/result.log")

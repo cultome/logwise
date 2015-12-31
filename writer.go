@@ -16,8 +16,8 @@ type FileWriter struct {
   Postfix string
 }
 
-func NewFileWriter(filePath string, append bool) Writer {
-  return &FileWriter{filePath, append, "", ""}
+func NewFileWriter(filePath string, append bool, prefix,sufix string) Writer {
+  return &FileWriter{filePath, append, prefix, sufix}
 }
 
 func (w *FileWriter) AddPrefix(prefix string) *FileWriter {
@@ -42,7 +42,7 @@ func (w *FileWriter) Write(lines []string) {
   file,_ := os.OpenFile(w.FilePath, flags, 0666)
   defer file.Close()
   
-  if w.Prefix != ""{
+  if w.Prefix != "" {
     file.WriteString(fmt.Sprintf("%v\n", w.Prefix))
   }
 
@@ -50,7 +50,7 @@ func (w *FileWriter) Write(lines []string) {
     file.WriteString(fmt.Sprintf("%v\n", line))
   }
 
-  if w.Postfix != ""{
+  if w.Postfix != "" {
     file.WriteString(fmt.Sprintf("%v\n", w.Postfix))
   }
 }

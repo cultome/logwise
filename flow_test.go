@@ -40,7 +40,7 @@ func TestFilterExtractorTransformationFilterWriterFlow(t *testing.T){
     NewPatternExtractor(nil, map[string]string {"txId": "invoices - \\[([\\d]+) ->]"}),
     NewSurroundStringTransformation("txId", "\\[", " <-]"),
     NewLineFilter(NewFileReader("logs/invReqRes.log", "logs/invReqRes.log1"), nil),
-    NewFileWriter("logs/responses.log", false),
+    NewFileWriter("logs/responses.log", false, "", ""),
   )
   flow.Start()
 }
@@ -49,18 +49,18 @@ func TestRealCaseTraceOrder(t *testing.T){
   flow := NewFlow(
     NewLineFilter(NewFileReader("logs/orderReqRes.log"), []string{"<awbNbr>794666000437</awbNbr>"}),
     NewLineFilter(NewFileReader("logs/invReqRes.log"), []string{"itemnumber=\"794666000437\""}),
-    NewFileWriter("logs/real_case.log", false), //.AddPrefix("===================== Invoice order and Invoice Request ====================="),
+    NewFileWriter("logs/real_case.log", false, "===================== Invoice order and Invoice Request =====================", " "),
 
     NewPatternExtractor(nil, map[string]string {"txId": "invoices - \\[([\\d]+) ->]"}),
     NewSurroundStringTransformation("txId", "\\[", " <-]"),
     NewLineFilter(NewFileReader("logs/invReqRes.log"), nil),
-    NewFileWriter("logs/real_case.log", true), //.AddPrefix("\n\n===================== Invoice Response ====================="),
+    NewFileWriter("logs/real_case.log", true, "===================== Invoice Response =====================", " "),
 
     NewPatternExtractor(nil, map[string]string {"folio": "<folio>([\\d]+)</folio>"}),
     NewSurroundStringTransformation( "folio", "", "</InvoiceNumber>"),
     NewLineFilter(NewFileReader("logs/automaticTasks.log"), nil),
     NewLineContext("tasks - \\[\\*] Message", "INFO   "),
-    NewFileWriter("logs/real_case.log", true), //.AddPrefix("\n\n===================== LCCS Transaction ====================="),
+    NewFileWriter("logs/real_case.log", true, "===================== LCCS Transaction =====================", " "),
   )
   flow.Start()
 }

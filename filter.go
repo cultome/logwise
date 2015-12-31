@@ -33,7 +33,6 @@ func (line *Line) String() string {
 /*
  * FileReader
  */
-
 type FileReader struct {
   Files []string
   currentFile int
