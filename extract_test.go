@@ -1,7 +1,6 @@
 package logwise
 
 import "testing"
-//import "fmt"
 
 func TestExtractOnePattern(t *testing.T){
   line := Line{50426, "INFO   2015-12-24 14:28:16,788 resourceAccess - [+] /invoiceOrder.do | 30 | 910744", "logs/nohup.out", "/([\\w]+).do"}

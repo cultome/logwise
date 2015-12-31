@@ -1,8 +1,5 @@
 package logwise
 
-import (
-)
-
 type Flow struct {
   Steps []interface{}
 }
