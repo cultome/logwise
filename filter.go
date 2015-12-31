@@ -1,21 +1,24 @@
 package logwise
 
 import (
-  "bufio"
   "fmt"
-  "os"
   "regexp"
+  "bufio"
+  "os"
 )
 
 type Filter interface {
-  Filter(reader *LineReader, patterns []string) []*Line
+  Filter(reader LineReader, patterns []string) []*Line
 }
 
 type LineReader interface {
-  Read() *Line
+  Read() (*Line, error)
   Source() string
 }
 
+/*
+ * Line
+ */
 type Line struct {
   LineNbr int
   Content string
@@ -23,38 +26,80 @@ type Line struct {
   Regexp string
 }
 
-type LineFilter struct {
-  Reader *LineReader
-  Patterns []string
-}
-
 func (line *Line) String() string {
   return fmt.Sprintf("[%6d] %v", line.LineNbr, line.Content)
 }
 
-func NewLineFilter(reader *LineReader, patterns []string) Filter {
-  return &LineFilter{files, patterns}
+/*
+ * FileReader
+ */
+
+type FileReader struct {
+  Files []string
+  currentFile int
+  currentLineNbr int
+  fileInScanner *os.File
+  scanner *bufio.Scanner
+}
+
+func NewFileReader(filePaths ...string) LineReader {
+  return &FileReader{filePaths, -1, -1, nil, nil}
+}
+
+func (r *FileReader) Read() (*Line, error) {
+  var err error
+  if r.currentFile < 0 {
+    r.currentFile = 0
+    r.currentLineNbr = 0
+    r.scanner, r.fileInScanner, err = scanner(r.Files[r.currentFile])
+  } else if r.scanner == nil {
+    r.currentFile += 1
+    r.fileInScanner.Close()
+    if r.currentFile >= len(r.Files) {
+      return nil, fmt.Errorf("End of files")
+    }
+    r.scanner, r.fileInScanner, err = scanner(r.Files[r.currentFile])
+  }
+
+  if err != nil {
+    return nil, err
+  }
+
+  if r.scanner.Scan() {
+    r.currentLineNbr += 1
+    return &Line{r.currentLineNbr, r.scanner.Text(), r.Files[r.currentFile], ""}, nil
+  }
+
+  r.scanner = nil
+  return r.Read()
+}
+
+func scanner(filePath string) (*bufio.Scanner, *os.File, error) {
+  file, err := os.OpenFile(filePath, os.O_RDONLY, 0666)
+  if err != nil {
+    return nil, nil, fmt.Errorf("File [%v] cannot be open: %v", filePath, err)
+  }
+  scanner := bufio.NewScanner(file)
+  return scanner, file, nil
+}
+
+func (r *FileReader) Source() string {
+  return r.Files[r.currentFile]
 }
 
 /*
-func (filter *LineFilter) SetPatterns(patterns []string) *LineFilter {
-  filter.Patterns = patterns
-  return filter
+ * LineFilter
+ */
+type LineFilter struct {
+  Reader LineReader
+  Patterns []string
 }
 
-func (filter *LineFilter) SetFiles(files ...string) *LineFilter {
-  filter.Files = files
-  return filter
+func NewLineFilter(reader LineReader, patterns []string) Filter {
+  return &LineFilter{reader, patterns}
 }
 
-func (filter *LineFilter) Set(files []string, patterns []string) *LineFilter {
-  filter.Files = files
-  filter.Patterns = patterns
-  return filter
-}
-*/
-
-func (filter *LineFilter) Filter(reader *LineReader, patterns []string) []*Line {
+func (filter *LineFilter) Filter(reader LineReader, patterns []string) []*Line {
   f, p := filterOperativeParams(filter, reader, patterns)
 
   var linesMatched []*Line
@@ -65,13 +110,14 @@ func (filter *LineFilter) Filter(reader *LineReader, patterns []string) []*Line 
     regexps[idx] = reg
   }
 
-  //for _,file := range f {
-    lines := scanFile(reader, regexps)
+  lines, err := scanFile(f, regexps)
+  if err == nil {
     if len(lines) > 0{
       newLines := filterExisting(linesMatched, lines)
       linesMatched = append(linesMatched, newLines...)
     }
-  //}
+  }
+
   return linesMatched
 }
 
@@ -96,12 +142,12 @@ func filterExisting(existing, news []*Line) []*Line {
   return newLines
 }
 
-func filterOperativeParams(filter *LineFilter, reader *LineReader, patterns []string) (*LineReader, []string) {
+func filterOperativeParams(filter *LineFilter, reader LineReader, patterns []string) (LineReader, []string) {
   if (reader == nil && filter.Reader == nil) || (patterns == nil && filter.Patterns == nil) {
     panic("Reader and Patterns are required for Filter to work!")
   }
 
-  var f []string
+  var f LineReader
   var p []string
 
   if filter.Reader == nil {
@@ -119,24 +165,29 @@ func filterOperativeParams(filter *LineFilter, reader *LineReader, patterns []st
   return f,p
 }
 
-func scanFile(reader *LineReader, regexps []*regexp.Regexp) []*Line {
+func scanFile(reader LineReader, regexps []*regexp.Regexp) ([]*Line, error) {
   var lines []*Line
-
-  //file,_ := os.Open(filePath)
-  //defer file.Close()
-  //scanner := bufio.NewScanner(file)
-
   lineIdx := 1
-  //for scanner.Scan() {
-    regex := match(reader.Read(), regexps)
+  var err error
+
+  for line, err := reader.Read(); err == nil; line, err = reader.Read() {
+    regex := match(line.Content, regexps)
     if regex != "" {
-      line := Line{lineIdx, scanner.Text(), reader.Source(), regex}
+      line := Line{lineIdx, line.Content, reader.Source(), regex}
       lines = append(lines, &line)
+
+      if len(lines) > 200000 {
+        panic("Too many lines detected. Please refine the search pattern")
+      }
     }
     lineIdx++
-  //}
+  }
 
-  return lines
+  if err != nil && err.Error() != "End of files" {
+    return nil, err
+  }
+
+  return lines, nil
 }
 
 func match(line string, regexps []*regexp.Regexp) string {

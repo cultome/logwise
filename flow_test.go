@@ -9,7 +9,7 @@ import (
 
 func TestFilterExtractorFlow(t *testing.T){
   flow := NewFlow(
-    NewLineFilter([]string{"logs/nohup.out"}, []string{"\\[\\+] /invoiceOrder.do"}),
+    NewLineFilter(NewFileReader("logs/nohup.out"), []string{"\\[\\+] /invoiceOrder.do"}),
     NewPatternExtractor(nil, map[string]string {"path,role,user": "/([\\w]+).do | ([\\d]+) | ([\\d]+)$"}),
   )
   flow.Start()
@@ -17,29 +17,29 @@ func TestFilterExtractorFlow(t *testing.T){
 
 func TestFilterExtractorFilterFlow(t *testing.T){
   flow := NewFlow(
-    NewLineFilter([]string{"logs/nohup.out"}, []string{"invoices - \\[[\\d]+ ->]"}),
+    NewLineFilter(NewFileReader("logs/nohup.out"), []string{"invoices - \\[[\\d]+ ->]"}),
     NewPatternExtractor(nil, map[string]string {"txId": "invoices - \\[([\\d]+) ->]"}),
-    NewLineFilter([]string{"logs/nohup.out"}, nil),
+    NewLineFilter(NewFileReader("logs/nohup.out"), nil),
   )
   flow.Start()
 }
 
 func TestFilterExtractorTransformationFilterFlow(t *testing.T){
   flow := NewFlow(
-    NewLineFilter([]string{"logs/nohup.out"}, []string{"invoices - \\[[\\d]+ ->]"}),
+    NewLineFilter(NewFileReader("logs/nohup.out"), []string{"invoices - \\[[\\d]+ ->]"}),
     NewPatternExtractor(nil, map[string]string {"txId": "invoices - \\[([\\d]+) ->]"}),
     NewSurroundStringTransformation("txId", "\\[", " <-]"),
-    NewLineFilter([]string{"logs/invReqRes.log", "logs/invReqRes.log1"}, nil),
+    NewLineFilter(NewFileReader("logs/invReqRes.log", "logs/invReqRes.log1"), nil),
   )
   flow.Start()
 }
 
 func TestFilterExtractorTransformationFilterWriterFlow(t *testing.T){
   flow := NewFlow(
-    NewLineFilter([]string{"logs/nohup.out"}, []string{"invoices - \\[[\\d]+ ->]"}),
+    NewLineFilter(NewFileReader("logs/nohup.out"), []string{"invoices - \\[[\\d]+ ->]"}),
     NewPatternExtractor(nil, map[string]string {"txId": "invoices - \\[([\\d]+) ->]"}),
     NewSurroundStringTransformation("txId", "\\[", " <-]"),
-    NewLineFilter([]string{"logs/invReqRes.log", "logs/invReqRes.log1"}, nil),
+    NewLineFilter(NewFileReader("logs/invReqRes.log", "logs/invReqRes.log1"), nil),
     NewFileWriter("logs/responses.log", false),
   )
   flow.Start()
@@ -47,18 +47,18 @@ func TestFilterExtractorTransformationFilterWriterFlow(t *testing.T){
 
 func TestRealCaseTraceOrder(t *testing.T){
   flow := NewFlow(
-    NewLineFilter([]string{"logs/orderReqRes.log"}, []string{"<awbNbr>794666000437</awbNbr>"}),
-    NewLineFilter([]string{"logs/invReqRes.log"}, []string{"itemnumber=\"794666000437\""}),
+    NewLineFilter(NewFileReader("logs/orderReqRes.log"), []string{"<awbNbr>794666000437</awbNbr>"}),
+    NewLineFilter(NewFileReader("logs/invReqRes.log"), []string{"itemnumber=\"794666000437\""}),
     NewFileWriter("logs/real_case.log", false), //.AddPrefix("===================== Invoice order and Invoice Request ====================="),
 
     NewPatternExtractor(nil, map[string]string {"txId": "invoices - \\[([\\d]+) ->]"}),
     NewSurroundStringTransformation("txId", "\\[", " <-]"),
-    NewLineFilter([]string{"logs/invReqRes.log"}, nil),
+    NewLineFilter(NewFileReader("logs/invReqRes.log"), nil),
     NewFileWriter("logs/real_case.log", true), //.AddPrefix("\n\n===================== Invoice Response ====================="),
 
     NewPatternExtractor(nil, map[string]string {"folio": "<folio>([\\d]+)</folio>"}),
     NewSurroundStringTransformation( "folio", "", "</InvoiceNumber>"),
-    NewLineFilter([]string{"logs/automaticTasks.log"}, nil),
+    NewLineFilter(NewFileReader("logs/automaticTasks.log"), nil),
     NewLineContext("tasks - \\[\\*] Message", "INFO   "),
     NewFileWriter("logs/real_case.log", true), //.AddPrefix("\n\n===================== LCCS Transaction ====================="),
   )

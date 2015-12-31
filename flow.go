@@ -110,7 +110,7 @@ func callFilter(filter Filter, prevStep interface{}, prevResult interface{}) []*
 
   } else if prevFilter, ok := prevStep.(*LineFilter); ok {
     // archivos y patrones
-    ls := filter.Filter(prevFilter.Files, prevFilter.Patterns)
+    ls := filter.Filter(prevFilter.Reader, prevFilter.Patterns)
     prevLines := prevResult.([]*Line)
     lines = append(prevLines, ls...)
   }

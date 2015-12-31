@@ -1,8 +1,7 @@
 package logwise
 
 import(
-  "os"
-  "bufio"
+  "regexp"
 )
 
 type Contexter interface {
@@ -27,75 +26,74 @@ func (ctx *LineContext) Get(lines ...*Line) []*Line {
   var existingRanges []lineRange
 
   for _,line := range lines {
-    rangeLines, begin, end := getLines(ctx, line)
-    if !rangeExists(&existingRanges, &lineRange{begin.LineNbr, end.LineNbr, line.FileName}) {
+    rangeLines := getLines(ctx, line)
+    if !rangeExists(&existingRanges, &rangeLines) {
       result = append(result, rangeLines...)
     }
   }
   return result
 }
 
-func rangeExists(existingRanges *[]lineRange, lineRange *lineRange) bool {
+func rangeExists(existingRanges *[]lineRange, lrange *[]*Line) bool {
+  begin := (*lrange)[0]
+  end := (*lrange)[len(*lrange)-1]
+
   if existingRanges != nil {
     for _,r := range *existingRanges {
-      if r.begin == lineRange.begin && r.end == lineRange.end && r.fileName == lineRange.fileName {
+      if r.begin == begin.LineNbr && r.end == end.LineNbr && r.fileName == begin.FileName {
         return true
       }
     }
   }
 
-  *existingRanges = append(*existingRanges, *lineRange)
+  r := lineRange{begin.LineNbr, end.LineNbr, begin.FileName}
+  *existingRanges = append(*existingRanges, r)
   return false
 }
 
-func getLines(ctx *LineContext, line *Line) ([]*Line, *Line, *Line) {
-  filter := NewLineFilter([]string{line.FileName}, []string{ctx.BeforeMatch, ctx.AfterMatch})
-  //filter.Set([]string{line.FileName}, []string{ctx.BeforeMatch, ctx.AfterMatch})
-  lines := filter.Filter(nil, nil)
+func getLines(ctx *LineContext, line *Line) []*Line {
+  reader := NewFileReader(line.FileName)
 
-  beginLine := findBegin(lines, line, ctx.BeforeMatch)
-  endLine := findEnd(lines, line, ctx.AfterMatch)
-
-  lineCtx := extractLineRange(line.FileName, beginLine.LineNbr, endLine.LineNbr)
-
-  return lineCtx, beginLine, endLine
+  topRange := topRange(reader, ctx.BeforeMatch, line.LineNbr)
+  bottomRange := bottomRange(reader, ctx.AfterMatch)
+  return append(topRange, bottomRange...)
 }
 
-func extractLineRange(filePath string, beginLine, endLine int) []*Line {
+func bottomRange(reader LineReader, expression string) []*Line {
   var lines []*Line
-  file,_ := os.Open(filePath)
-  defer file.Close()
-  scanner := bufio.NewScanner(file)
-
-  lineIdx := 0
-  for ; lineIdx < beginLine; lineIdx++ {    
-    scanner.Scan() 
+  reg := regexp.MustCompile(expression)
+  
+  for l,err := reader.Read(); err == nil; l,err = reader.Read() {
+    if reg.MatchString(l.Content) {
+      break
+    } else {
+      lines = append(lines, l)
+    }
   }
-
-  for ; lineIdx < endLine; lineIdx++ {
-    lines = append(lines, &Line{lineIdx, scanner.Text(), filePath, ""})
-    scanner.Scan()
-  }
-
   return lines
 }
 
-func findBegin(lines []*Line, line *Line, regexp string) *Line {
-  var begin *Line
-  for _,l := range lines {
-    if l.Regexp == regexp && l.LineNbr < line.LineNbr && (begin == nil || begin.LineNbr < l.LineNbr) {
-      begin = l
-    }
-  }
-  return begin
-}
+func topRange(reader LineReader, expression string, refLineNbr int) []*Line {
+  var lines []*Line
+  capturing := false
 
-func findEnd(lines []*Line, line *Line, regexp string) *Line {
-  var end *Line
-  for _,l := range lines {
-    if l.Regexp == regexp && l.LineNbr > line.LineNbr && (end == nil || end.LineNbr > l.LineNbr) {
-      end = l
+  reg := regexp.MustCompile(expression)
+
+  for l,err := reader.Read(); err == nil; l,err = reader.Read() {
+    if reg.MatchString(l.Content) {
+      capturing = true
+      lines = nil
+    }
+
+    if l.LineNbr > refLineNbr {
+      lines = append(lines, l)
+      break
+    }
+
+    if capturing {
+      lines = append(lines, l)
     }
   }
-  return end
+
+  return lines
 }
