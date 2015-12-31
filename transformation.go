@@ -36,6 +36,5 @@ func (trans *CustomTransformation) Transform(key,value string) string {
   if key == trans.Key {
     return trans.Fnc(value)
   }
-
   return value
 }

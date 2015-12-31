@@ -4,7 +4,7 @@ import (
   "testing"
   "time"
   "strconv"
-//  "fmt"
+  "fmt"
 )
 
 func TestFilterExtractorFlow(t *testing.T){
@@ -57,29 +57,12 @@ func TestRealCaseTraceOrder(t *testing.T){
     NewFileWriter("logs/real_case.log", true, "===================== Invoice Response =====================", " "),
 
     NewPatternExtractor(nil, map[string]string {"folio": "<folio>([\\d]+)</folio>"}),
-    NewSurroundStringTransformation( "folio", "", "</InvoiceNumber>"),
+    NewCustomTransformation("folio", func(v string) string {
+      return fmt.Sprintf("<InvoiceNumber>([A-Z]+%v)</InvoiceNumber>", v)
+    }),
     NewLineFilter(NewFileReader("logs/automaticTasks.log"), nil),
     NewLineContext("tasks - \\[\\*] Message", "INFO   "),
     NewFileWriter("logs/real_case.log", true, "===================== LCCS Transaction =====================", " "),
   )
   flow.Start()
-}
-
-func tenSecondsLater(value string) string {
-  // 2015-12-24 13:07:00,241
-  year,_ := strconv.Atoi(value[:4])
-  month,_ := strconv.Atoi(value[5:7])
-  day,_ := strconv.Atoi(value[8:10])
-
-  hour,_ := strconv.Atoi(value[11:13])
-  minute,_ := strconv.Atoi(value[14:16])
-  second,_ := strconv.Atoi(value[17:19])
-
-  location,_ := time.LoadLocation("America/Mexico_City")
-
-  date := time.Date(year, time.Month(month), day, hour, minute, second, 0, location)
-
-  after := date.Add(10 * time.Second)
-
-  return after.String()[:18]
 }
