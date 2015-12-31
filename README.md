@@ -1,11 +1,11 @@
 # Logwise
 Utility to automate information extraction from logs.
 
-Its common for me to be in front ofa console grep-ing log files to extract pices of information to feed another grep to get another piece of information, an so and so. This utility allows me to create commands to automate this work flows.
+Its common for me to be in front of a console grep-ing log files to extract pieces of information to feed another grep to get another piece of information, an so and so. This utility allows me to create commands to automate this workflow.
 
 ## Usage
 
-To automate a work flow, you create a ```NewFlow``` and add a pipeline-like of commands. Basically it dows 3 things:
+To automate a work flow, you create a ```NewFlow``` and add a pipeline-like of commands. Basically it does 3 things:
   * Filter lines
   * Extract information from those lines
   * Convert the extracted information
@@ -15,7 +15,7 @@ For example, the following script does:
   * Look for the pattern ```itemnumber="794666000437"``` in the file ```logs/invReqRes.log```.
   * The resulting lines (of both filters) are writen in the file ```logs/real_case.log``` (deleting its contents if any using the flag ```append``` in false).
   * In the resulting lines, match the regexp ```invoices - \\[([\\d]+) ->]```, storing the capture group within the name ```txId```.
-  * Apply a transformation to the ```txId```, in this case only surround the value of ```txId``` with prefix ```[``` and sufix ``` <-]```.
+  * Apply a transformation to the ```txId```, in this case only surrounds the value of ```txId``` with prefix ```[``` and sufix ``` <-]```.
   * With the result of this transformation, filter the file ```logs/invReqRes.log```.
   * Write the resulting lines in the file ```logs/real_case.log``` (this time appending to the existing content using the flag ```append``` in true).
   * Using result of this transformation, match the pattern ```<folio>([\\d]+)</folio>``` and put the results within the name ```folio```.
@@ -45,7 +45,7 @@ NewFlow(
 ).Start()
 ```
 
-At the end of the process you got all the information in the file ```logs/real_case.log```, so you can analize it.
+At the end of the process you have all the information in the file ```logs/real_case.log```, so you can analize it easily.
 
 You can find a couple more examples in ```flow_test.go```
 
